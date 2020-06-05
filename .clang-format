@@ -1,0 +1,30 @@
+---
+BasedOnStyle: WebKit
+Standard: c++11
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: WithoutElse
+BraceWrapping:
+  AfterClass:      true
+  AfterControlStatement: false
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  false
+  AfterObjCDeclaration: true
+  AfterStruct:     true
+  AfterUnion:      true
+  BeforeCatch:     true
+  BeforeElse:      false
+  IndentBraces:    false
+BreakBeforeBraces: Custom
+BreakConstructorInitializersBeforeComma: 'false'
+NamespaceIndentation: None
+PointerAlignment: Right
+SortIncludes: 'false'
+TabWidth: '4'
+UseTab: ForIndentation
+
+FixNamespaceComments: true
+
+
+
+...
