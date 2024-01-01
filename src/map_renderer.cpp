@@ -58,54 +58,59 @@ static const uint staticWI = 0;
 
 struct KeyBindingRec
 {
+	std::string id;
 	TKey Key;
 	bool HeldDown;
 	std::string Descr;
+
+	bool operator==(const std::string &value) const {
+		return id == value;
+	}
 };
 
-// TODO: use enum for map index
-std::map<std::string, KeyBindingRec> KeyBindings = {
-	{ "0x0", { Key1, false, "" } },
-	{ "pyr", { Key2, false, "" } },
-	{ "fairhaven", { Key3, false, "" } },
-	{ "yrkanis", { Key4, false, "" } },
-	{ "zorai", { Key5, false, "" } },
-	{ "nexus", { Key6, false, "shift: marauder city" } },
-	{ "inverse-z", { KeyI, false, "" } },
-	{ "grid", { KeyG, false, "shift: names" } },
-	{ "pacs", { KeyP, false, "" } },
-	{ "pacs 0", { KeyNUMPAD0, false, "" } },
-	{ "pacs 1", { KeyNUMPAD1, false, "" } },
-	{ "pacs 2", { KeyNUMPAD2, false, "" } },
-	{ "pacs 3", { KeyNUMPAD3, false, "" } },
-	{ "pacs 4", { KeyNUMPAD4, false, "" } },
-	{ "pacs 5", { KeyNUMPAD5, false, "" } },
-	{ "clusters", { KeyC, false, "" } },
+std::vector<KeyBindingRec> KeyBindings = {
+	{ "0x0", Key1, false, "" },
+	{ "pyr", Key2, false, "" },
+	{ "---", KeyNOKEY, false, "" },
+	{ "fairhaven", Key3, false, "" },
+	{ "yrkanis", Key4, false, "" },
+	{ "zorai", Key5, false, "" },
+	{ "nexus", Key6, false, "shift: marauder city" },
+	{ "---", KeyNOKEY, false, "" },
+	{ "inverse-z", KeyI, false, "" },
+	{ "grid", KeyG, false, "shift: names" },
+	{ "---", KeyNOKEY, false, "" },
+	{ "pacs", KeyP, false, "show/hide pacs" },
+	{ "pacs 0", KeyNUMPAD0, false, "" },
+	{ "pacs 1", KeyNUMPAD1, false, "" },
+	{ "pacs 2", KeyNUMPAD2, false, "" },
+	{ "pacs 3", KeyNUMPAD3, false, "" },
+	{ "pacs 4", KeyNUMPAD4, false, "" },
+	{ "pacs 5", KeyNUMPAD5, false, "" },
+	{ "---", KeyNOKEY, false, "" },
+	{ "clusters", KeyC, false, "" },
 	// TODO: should have debug pacs / collisions debug aswell
-
-	{ "tilenear", { KeyN, true, "shift:+/-10; ctrl:0" } },
-	{ "vision", { KeyV, true, "shift:+/-10; ctrl:0" } },
-
-	{ "left", { KeyA, true, "shift:+/-10" } },
-	{ "right", { KeyD, true, "shift:+/-10" } },
-	{ "up", { KeyW, true, "shift:+/-10" } },
-	{ "down", { KeyS, true, "shift:+/-10" } },
-
-	{ "z++", { KeyZ, true, "" } },
-	{ "z--", { KeyX, true, "" } },
-
-	{ "render", { KeyF10, false, "" } },
-
-	{ "light", { KeyF11, false, "" } },
-	{ "slowdown", { KeyF12, false, "" } },
-	{ "trees", { KeyT, false, "" } },
-	{ "season", { KeyINSERT, false, "" } },
-	{ "reset", { KeyR, false, "" } },
-
-	{ "quit", { KeyESCAPE, false, "" } },
-
+	{ "---", KeyNOKEY, false, "" },
+	{ "tilenear", KeyN, true, "shift:+/-10; ctrl:0" },
+	{ "vision", KeyV, true, "shift:+/-10; ctrl:0" },
+	{ "---", KeyNOKEY, false, "" },
+	{ "left", KeyA, true, "shift:+/-10" },
+	{ "right", KeyD, true, "shift:+/-10" },
+	{ "up", KeyW, true, "shift:+/-10" },
+	{ "down", KeyS, true, "shift:+/-10" },
+	{ "z++", KeyZ, true, "" },
+	{ "z--", KeyX, true, "" },
+	{ "---", KeyNOKEY, false, "" },
+	{ "render", KeyF10, false, "" },
+	{ "light", KeyF11, false, "" },
+	{ "slowdown", KeyF12, false, "" },
+	{ "trees", KeyT, false, "" },
+	{ "season", KeyINSERT, false, "" },
+	{ "reset", KeyR, false, "" },
+	{ "---", KeyNOKEY, false, "" },
+	{ "quit", KeyESCAPE, false, "" },
 	// catch last comma
-	{ "", { KeyNOKEY, false, "" } }
+	{ "", KeyNOKEY, false, "" }
 };
 
 //----------------------------------------------------------------------------
@@ -1708,18 +1713,23 @@ void CMapRenderer::renderOverlay()
 	text->setHotSpot(UTextContext::TopLeft);
 	uint liney = windowHeight;
 	for (const auto &it : KeyBindings) {
-		if (it.second.Key == KeyNOKEY) continue;
+		if (it.id.empty()) continue;
 
-		std::string keyName = CEventKey::getStringFromKey(it.second.Key);
+		if (it.id == "---") {
+			liney -= fontSize;
+			continue;
+		}
+
+		std::string keyName = CEventKey::getStringFromKey(it.Key);
 		if (startsWith(keyName, "Key")) {
 			keyName = keyName.substr(3);
 		}
 		std::string desc;
-		if (!it.second.Descr.empty()) {
-			desc = " (" + it.second.Descr + ")";
+		if (!it.Descr.empty()) {
+			desc = " (" + it.Descr + ")";
 		}
 
-		text->printfAt(0.01f, (float)liney / windowHeight, "(%s) %s%s", keyName.c_str(), it.first.c_str(), desc.c_str());
+		text->printfAt(0.01f, (float)liney / windowHeight, "(%s) %s%s", keyName.c_str(), it.id.c_str(), desc.c_str());
 		liney -= fontSize + 4;
 	}
 
@@ -1766,19 +1776,17 @@ void CMapRenderer::frameEnd()
 
 bool CMapRenderer::checkKey(const std::string &name) const
 {
-	const auto &it = KeyBindings.find(name);
-	if (it == KeyBindings.end()) {
+	const auto &key = std::find(KeyBindings.begin(), KeyBindings.end(), name);
+	if (key == KeyBindings.end()) {
 		std::cout << ":: invalid keybinding " << name << '\n';
 		return false;
 	}
 
-	const auto &key = it->second;
-
-	if (key.HeldDown) {
-		return driver->AsyncListener.isKeyDown(key.Key);
+	if (key->HeldDown) {
+		return driver->AsyncListener.isKeyDown(key->Key);
 	}
 
-	return driver->AsyncListener.isKeyPushed(key.Key);
+	return driver->AsyncListener.isKeyPushed(key->Key);
 }
 
 //---------------------------------------------------------------------------
