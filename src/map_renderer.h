@@ -99,6 +99,8 @@ public:
 		_TileNearLocked = true;
 		_LandscapeTileNear = tileNear;
 	}
+	void setZNear(float z) { _ZNear = z; }
+	void setZFar(float z) { _ZFar = z; }
 
 	std::vector<std::string> getMapNames();
 	std::vector<std::string> getContinentNames();
@@ -189,6 +191,7 @@ private:
 	double _FrameDelta;
 	bool _SlowDown;
 	bool _UseLight;
+	bool _CamChanged;
 	// only render X frame(s) and then quit (for profiling)
 	uint _FrameLimit;
 
@@ -197,6 +200,9 @@ private:
 	uint _LandscapeTileNear;
 	uint _LandscapeVision;
 	float _LandscapeThreshold;
+
+	float _ZNear;
+	float _ZFar;
 
 	std::string _Season;
 	EGSPD::CSeason::TSeason _SeasonId;

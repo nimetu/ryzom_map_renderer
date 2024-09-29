@@ -50,6 +50,9 @@ int main(int argc, char **argv)
 	args.addArg("", "list-maps", "", "list ingame maps from ryzom.world");
 	args.addArg("", "list-continents", "", "list ingame map continents from ryzom.world");
 
+	args.addArg("", "znear", "-1000", "camera frustum z-near");
+	args.addArg("", "zfar", "1000", "camera frustum z-far");
+
 	args.addArg("", "vision", "500", "landscape vision in meters (radius)");
 	args.addArg("", "tilenear", "50", "landscape tile near in meters (radius)");
 	args.addArg("", "scale", "px:m", "pixel/meter scale, ie '--scale 2:1' is 2px == 1m");
@@ -125,6 +128,24 @@ int main(int argc, char **argv)
 			uint nr = 0;
 			if (fromString(args.getLongArg("tilenear").front(), nr)) {
 				render.setTileNear(nr);
+			}
+		}
+	}
+
+	if (args.haveLongArg("znear")) {
+		if (!args.getLongArg("znear").empty()) {
+			float nr = 0;
+			if (fromString(args.getLongArg("znear").front(), nr)) {
+				render.setZNear(nr);
+			}
+		}
+	}
+
+	if (args.haveLongArg("zfar")) {
+		if (!args.getLongArg("zfar").empty()) {
+			float nr = 0;
+			if (fromString(args.getLongArg("zfar").front(), nr)) {
+				render.setZFar(nr);
 			}
 		}
 	}

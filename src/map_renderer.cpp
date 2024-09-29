@@ -100,6 +100,8 @@ std::vector<KeyBindingRec> KeyBindings = {
 	{ "down", KeyS, true, "shift:+/-10" },
 	{ "z++", KeyZ, true, "" },
 	{ "z--", KeyX, true, "" },
+	{ "znear", KeyADD, true, ""},
+	{ "zfar", KeySUBTRACT, true, ""},
 	{ "---", KeyNOKEY, false, "" },
 	{ "render", KeyF10, false, "" },
 	{ "light", KeyF11, false, "" },
@@ -164,7 +166,10 @@ CMapRenderer::CMapRenderer()
 	_SheetsLoaded = false;
 
 	// pyr as default
-	_ViewCenter = CVector(18886, -24346, 400.f);
+	_ViewCenter = CVector(18886, -24346, 0.f);
+
+	_ZNear = -1000.f;
+	_ZFar = 1000.f;
 }
 
 //----------------------------------------------------------------------------
@@ -935,7 +940,7 @@ void CMapRenderer::renderScreenshot(CBitmap &btm)
 	uint scaledWidth = (float)windowWidth / _Scale;
 	uint scaledHeight = (float)windowHeight / _Scale;
 	// frustum sets visible area in meters (-400, 400)
-	scene->getCam().setFrustum(scaledWidth, scaledHeight, -10000.f, 10000.f, false);
+	scene->getCam().setFrustum(scaledWidth, scaledHeight, _ZNear, _ZFar, false);
 	scene->setViewport(CViewport());
 
 	//------------------------------------------------------------------------
@@ -1522,7 +1527,7 @@ bool CMapRenderer::run()
 			_Scale = 0.1;
 		}
 
-		scene->getCam().setFrustum(windowWidth / _Scale, windowHeight / _Scale, -10000.f, 10000.f, false);
+		scene->getCam().setFrustum(windowWidth / _Scale, windowHeight / _Scale, _ZNear, _ZFar, false);
 		scene->setViewport(CViewport());
 
 		frameStart();
@@ -1556,8 +1561,10 @@ bool CMapRenderer::run()
 	// setup camera initial position without mouse interface
 	updateCamera();
 
+	_CamChanged = true;
+
 	//scene->getCam().setPerspective (90.f/*(float)Pi/2.f*/, 1.33f, 0.1f, 1000);
-	scene->getCam().setFrustum(windowWidth, windowHeight, -10000.f, 10000.f, false);
+	scene->getCam().setFrustum(windowWidth, windowHeight, _ZNear, _ZFar, false);
 	scene->setViewport(CViewport());
 
 	// create mouse interface for camera matrix updates
@@ -1579,6 +1586,13 @@ bool CMapRenderer::run()
 
 	uint frameLimit = _FrameLimit;
 	while (driver->isActive() && !driver->AsyncListener.isKeyPushed(KeyESCAPE)) {
+		if (_CamChanged) {
+			scene->getCam().setFrustum(windowWidth, windowHeight, _ZNear, _ZFar, false);
+			scene->setViewport(CViewport());
+			mouse->setFrustrum(scene->getCam().getFrustum());
+			_CamChanged = false;
+		}
+
 		frameStart();
 
 		handleKeyboard();
@@ -1701,10 +1715,11 @@ void CMapRenderer::renderOverlay()
 	CMatrix mtx = scene->getCam().getMatrix();
 	CVector center = mtx.getPos();
 
-	text->printfAt(0.01f, 0.01f, "%s/%s:{%.1f, %.1f, %.1f} vision:%d tile:%d",
+	text->printfAt(0.01f, 0.01f, "%s/%s:{%.1f, %.1f, %.1f} vision:%d tile:%d znear:%.f, zfar:%.f",
 	    _Season.c_str(), _ActiveContinent ? _MapName.c_str() : "(no continent)",
 	    center.x, center.y, center.z,
-	    _LandscapeVision, _LandscapeTileNear);
+	    _LandscapeVision, _LandscapeTileNear,
+		_ZNear, _ZFar);
 
 	//
 	fontSize = 10;
@@ -1890,6 +1905,14 @@ void CMapRenderer::handleKeyboard()
 		if (_ViewCenter.x < 0) _ViewCenter.x = 0;
 		moveTo(_ViewCenter.x, _ViewCenter.y);
 		if (verbose) printf(":: viewCenter.x: %.2f\n", _ViewCenter.x);
+	} else if (checkKey("znear")) {
+		_ZNear += 10.f * (isShift ? 1 : -1);
+		_CamChanged = true;
+		if (verbose) printf(":: ZNear: %.2f\n", _ZNear);
+	} else if (checkKey("zfar")) {
+		_ZFar += 10.f * (isShift ? 1 : -1);
+		_CamChanged = true;
+		if (verbose) printf(":: ZFar: %.2f\n", _ZFar);
 	} else if (checkKey("right")) {
 		_ViewCenter.x += isShift ? stepX / 2 : stepX;
 		// ##_ZZ.zonel
